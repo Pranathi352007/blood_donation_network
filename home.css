@@ -1,0 +1,13 @@
+.buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+#donor{
+    background-color:rgb(47, 155, 201);
+    color:white;
+}
+#org{
+    background-color:rgb(47, 155, 201);
+    color:white;
+}
