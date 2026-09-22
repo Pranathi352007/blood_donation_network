@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 
+// VERIFY JWT TOKEN
 const protect = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -15,8 +16,11 @@ const protect = (req, res, next) => {
     // Get token from "Bearer TOKEN"
     const token = authHeader.split(" ")[1];
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify JWT token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
     // Store logged-in user's information
     req.user = {
@@ -25,6 +29,7 @@ const protect = (req, res, next) => {
     };
 
     next();
+
   } catch (error) {
     return res.status(401).json({
       success: false,
@@ -33,4 +38,32 @@ const protect = (req, res, next) => {
   }
 };
 
-module.exports = protect;
+
+// ROLE-BASED AUTHORIZATION
+const authorizeRoles = (...allowedRoles) => {
+
+  return (req, res, next) => {
+
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized."
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied for this role."
+      });
+    }
+
+    next();
+  };
+};
+
+
+module.exports = {
+  protect,
+  authorizeRoles
+};

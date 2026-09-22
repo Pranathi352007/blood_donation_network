@@ -6,7 +6,10 @@ const {
   getMe
 } = require("../controllers/authController");
 
-const protect = require("../middleware/authMiddleware");
+const {
+  protect,
+  authorizeRoles
+} = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -16,7 +19,20 @@ router.post("/register", registerUser);
 // Login user
 router.post("/login", loginUser);
 
-// Get logged-in user's profile - Protected route
+// Get logged-in user's profile
 router.get("/me", protect, getMe);
+
+// Test route - Donor only
+router.get(
+  "/donor-only",
+  protect,
+  authorizeRoles("donor"),
+  (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: "Welcome Donor! You are authorized to access this route."
+    });
+  }
+);
 
 module.exports = router;
