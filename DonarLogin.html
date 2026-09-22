@@ -36,6 +36,11 @@
 
     <p id="message"></p>
 
+    <p>
+        Don't have an account?
+        <a href="Register.html">Register here</a>
+    </p>
+
     <script>
         const loginForm = document.getElementById("loginForm");
         const message = document.getElementById("message");
@@ -44,8 +49,10 @@
 
             event.preventDefault();
 
-            const email = document.getElementById("email").value;
+            const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
+
+            message.textContent = "Logging in...";
 
             try {
 
@@ -72,15 +79,16 @@
                     // Save JWT token
                     localStorage.setItem("token", data.token);
 
-                    // Save user information
+                    // Save logged-in user information
                     localStorage.setItem(
                         "user",
                         JSON.stringify(data.user)
                     );
 
-                    message.textContent = "Login successful!";
+                    message.textContent =
+                        "Login successful! Welcome " + data.user.name + ".";
 
-                    console.log("Logged in user:", data.user);
+                    loginForm.reset();
 
                 } else {
 
