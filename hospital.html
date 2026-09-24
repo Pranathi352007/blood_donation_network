@@ -18,59 +18,135 @@
     </div>
 
     <section class="panel">
-      <div class="eyebrow">Blood request</div>
-      <h2>Create a blood requirement</h2>
-      <p class="subtitle">This frontend form is ready for the hospital request API. The current backend repository does not yet expose a blood-request endpoint, so submission is intentionally kept local until that API is added.</p>
-      <form id="requestForm">
+      <div class="eyebrow">Blood availability</div>
+      <h2>Update available blood</h2>
+      <p class="subtitle">Enter the number of units currently available at your hospital. This information is saved to MongoDB and is used by users searching for blood.</p>
+
+      <form id="availabilityForm">
         <div class="form-grid">
           <div class="field"><label for="hospitalName">Hospital name</label><input id="hospitalName" required></div>
-          <div class="field"><label for="bloodGroup">Blood group</label><select id="bloodGroup" required><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
-          <div class="field"><label for="units">Units required</label><input id="units" type="number" min="1" required></div>
           <div class="field"><label for="city">City</label><input id="city" required></div>
-          <div class="field full"><label for="urgency">Urgency</label><select id="urgency"><option>Normal</option><option>Urgent</option><option>Critical</option></select></div>
+          <div class="field"><label for="address">Address</label><input id="address"></div>
+          <div class="field"><label for="phone">Phone</label><input id="phone"></div>
         </div>
-        <div class="form-actions"><button class="btn btn-primary" type="submit">Save request locally</button></div>
+
+        <h3>Blood units available</h3>
+        <div class="form-grid">
+          <div class="field"><label for="Apos">A+</label><input id="Apos" type="number" min="0" value="0"></div>
+          <div class="field"><label for="Aneg">A-</label><input id="Aneg" type="number" min="0" value="0"></div>
+          <div class="field"><label for="Bpos">B+</label><input id="Bpos" type="number" min="0" value="0"></div>
+          <div class="field"><label for="Bneg">B-</label><input id="Bneg" type="number" min="0" value="0"></div>
+          <div class="field"><label for="ABpos">AB+</label><input id="ABpos" type="number" min="0" value="0"></div>
+          <div class="field"><label for="ABneg">AB-</label><input id="ABneg" type="number" min="0" value="0"></div>
+          <div class="field"><label for="Opos">O+</label><input id="Opos" type="number" min="0" value="0"></div>
+          <div class="field"><label for="Oneg">O-</label><input id="Oneg" type="number" min="0" value="0"></div>
+        </div>
+
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Save blood availability</button></div>
       </form>
       <p id="message" class="message"></p>
     </section>
 
     <section class="panel">
-      <div class="dashboard-header"><div><h2>Request status</h2><p>Saved in this browser for now. Backend persistence will be connected when request routes are implemented.</p></div></div>
-      <div id="requestList" class="donor-grid"></div>
+      <div class="dashboard-header"><div><h2>Current saved availability</h2><p>This is the availability currently stored for your hospital.</p></div></div>
+      <div id="savedAvailability" class="donor-grid"><div class="empty">Loading...</div></div>
     </section>
   </main>
 
   <script>
+    const API = "http://localhost:5001/api/hospitals";
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "null");
-    if (!token || !user || user.role !== "hospital") window.location.href = "OrgLogin.html";
-    else document.getElementById("welcome").textContent = `Welcome, ${user.name}. Hospital tools are ready.`;
 
-    const storageKey = "bloodDonationHospitalRequests";
-    const form = document.getElementById("requestForm");
-    const message = document.getElementById("message");
-    const list = document.getElementById("requestList");
-
-    function renderRequests() {
-      const requests = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      if (!requests.length) { list.innerHTML = '<div class="empty">No blood requests have been saved in this browser.</div>'; return; }
-      list.innerHTML = requests.map(r => `<article class="donor-card"><h3>${escapeHtml(r.hospitalName)}</h3><p><strong>Blood:</strong> ${escapeHtml(r.bloodGroup)}</p><p><strong>Units:</strong> ${r.units}</p><p><strong>City:</strong> ${escapeHtml(r.city)}</p><p><strong>Urgency:</strong> ${escapeHtml(r.urgency)}</p></article>`).join("");
+    if (!token || !user || user.role !== "hospital") {
+      window.location.href = "OrgLogin.html";
+    } else {
+      document.getElementById("welcome").textContent = `Welcome, ${user.name}. Update your hospital's blood availability.`;
+      loadAvailability();
     }
 
-    form.addEventListener("submit", event => {
+    const groups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+    const ids = { "A+": "Apos", "A-": "Aneg", "B+": "Bpos", "B-": "Bneg", "AB+": "ABpos", "AB-": "ABneg", "O+": "Opos", "O-": "Oneg" };
+
+    function escapeHtml(value) {
+      return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    }
+
+    function inventoryFromForm() {
+      const inventory = {};
+      groups.forEach(group => { inventory[group] = Number(document.getElementById(ids[group]).value || 0); });
+      return inventory;
+    }
+
+    function renderSaved(hospital) {
+      const box = document.getElementById("savedAvailability");
+      if (!hospital) { box.innerHTML = '<div class="empty">No availability saved yet.</div>'; return; }
+      const inventory = hospital.bloodInventory || {};
+      box.innerHTML = groups.map(group => `
+        <article class="donor-card">
+          <h3>${escapeHtml(group)}</h3>
+          <p><strong>Units available:</strong> ${escapeHtml(inventory[group] ?? 0)}</p>
+        </article>
+      `).join("");
+    }
+
+    async function loadAvailability() {
+      try {
+        const response = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || "Unable to load availability");
+        if (data.hospital) {
+          document.getElementById("hospitalName").value = data.hospital.name || user.name || "";
+          document.getElementById("city").value = data.hospital.city || user.city || "";
+          document.getElementById("address").value = data.hospital.address || "";
+          document.getElementById("phone").value = data.hospital.phone || user.phone || "";
+          const inventory = data.hospital.bloodInventory || {};
+          groups.forEach(group => { document.getElementById(ids[group]).value = inventory[group] ?? 0; });
+        } else {
+          document.getElementById("hospitalName").value = user.name || "";
+          document.getElementById("city").value = user.city || "";
+          document.getElementById("phone").value = user.phone || "";
+        }
+        renderSaved(data.hospital);
+      } catch (error) {
+        document.getElementById("savedAvailability").innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    document.getElementById("availabilityForm").addEventListener("submit", async event => {
       event.preventDefault();
-      const requests = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      requests.unshift({ hospitalName: document.getElementById("hospitalName").value.trim(), bloodGroup: document.getElementById("bloodGroup").value, units: Number(document.getElementById("units").value), city: document.getElementById("city").value.trim(), urgency: document.getElementById("urgency").value });
-      localStorage.setItem(storageKey, JSON.stringify(requests));
-      form.reset();
-      message.className = "message success";
-      message.textContent = "Request saved in this browser. Backend request persistence is not available yet.";
-      renderRequests();
+      const message = document.getElementById("message");
+      message.className = "message";
+      message.textContent = "Saving...";
+
+      try {
+        const response = await fetch(`${API}/availability`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            name: document.getElementById("hospitalName").value.trim(),
+            city: document.getElementById("city").value.trim(),
+            address: document.getElementById("address").value.trim(),
+            phone: document.getElementById("phone").value.trim(),
+            bloodInventory: inventoryFromForm()
+          })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || "Unable to save availability");
+        message.className = "message success";
+        message.textContent = "Blood availability saved successfully to MongoDB.";
+        renderSaved(data.hospital);
+      } catch (error) {
+        message.className = "message error";
+        message.textContent = error.message;
+      }
     });
 
-    function escapeHtml(v) { return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
-    document.getElementById("logout").addEventListener("click", () => { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "OrgLogin.html"; });
-    renderRequests();
+    document.getElementById("logout").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "OrgLogin.html";
+    });
   </script>
 </body>
 </html>
