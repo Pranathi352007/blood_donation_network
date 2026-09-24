@@ -1,36 +1,110 @@
 <!DOCTYPE html>
-<html>
-    <body>
-        <form>
-            Name:<input type="text" placeholder="eg:name" required><br>
-            Phone Number:<input type="number" placeholder="eg:1234567893" required><br>
-            Address:<textarea></textarea><br>
-            Age:<input type="number"><br>
-            Gender:
-            <label>
-                <input type="radio" name="gender" value="male">
-                Male
-            </label>
-            <label>
-                <input type="radio" name="gender" value="female">
-                Female
-            </label>
-            <label>
-            <input type="radio" name="gender" value="others">
-            Others
-            </label>
-            Blood Group:
-           <select>
-            <option>----Select Group----</option>
-            <option>A+</option>
-            <option>A-</option>
-            <option>B+</option>
-            <option>B-</option>
-            <option>O+</option>
-            <option>O-</option>
-            <option>AB+</option>
-            <option>AB-</option>
-           </select>
-        </form>
-    </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Login</title>
+</head>
+
+<body>
+
+    <h2>Donor Login</h2>
+
+    <form id="loginForm">
+
+        <label for="email">Email:</label>
+        <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            required
+        >
+        <br><br>
+
+        <label for="password">Password:</label>
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter your password"
+            required
+        >
+        <br><br>
+
+        <button type="submit">Login</button>
+
+    </form>
+
+    <p id="message"></p>
+
+    <p>
+        Don't have an account?
+        <a href="Register.html">Register here</a>
+    </p>
+
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const message = document.getElementById("message");
+
+        loginForm.addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            message.textContent = "Logging in...";
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:5001/api/auth/login",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+
+                    // Save JWT token
+                    localStorage.setItem("token", data.token);
+
+                    // Save logged-in user information
+                    localStorage.setItem(
+                        "user",
+                        JSON.stringify(data.user)
+                    );
+
+                    message.textContent =
+                        "Login successful! Welcome " + data.user.name + ".";
+
+                    loginForm.reset();
+
+                } else {
+
+                    message.textContent =
+                        data.message || "Login failed";
+                }
+
+            } catch (error) {
+
+                console.error("Login error:", error);
+
+                message.textContent =
+                    "Unable to connect to the server.";
+            }
+        });
+    </script>
+
+</body>
 </html>
