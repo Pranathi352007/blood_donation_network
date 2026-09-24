@@ -5,6 +5,7 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const donorRoutes = require("./routes/donorRoutes");
+const donorSearchRoutes = require("./routes/donorSearch");
 
 const app = express();
 
@@ -15,6 +16,8 @@ connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
+// Register the specific search route before the generic /:id donor route.
+app.use("/api/donors", donorSearchRoutes);
 app.use("/api/donors", donorRoutes);
 
 const PORT = process.env.PORT || 5001;
