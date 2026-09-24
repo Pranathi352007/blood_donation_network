@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const hospitalSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      unique: true,
+      sparse: true,
+    },
     name: {
       type: String,
       required: true,
