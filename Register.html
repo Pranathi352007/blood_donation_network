@@ -1,142 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Blood Donation Network</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account | Blood Donation Network</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
+  <div class="auth-page">
+    <section class="auth-visual">
+      <a class="brand" href="home.html"><span class="brand-mark">♥</span> Blood Donation Network</a>
+      <div>
+        <div class="eyebrow">Join the network</div>
+        <h1>One account. A stronger donation network.</h1>
+        <p>Create your account to connect with the blood donation community. Choose the role that matches how you use the platform.</p>
+      </div>
+    </section>
+    <section class="auth-form-wrap">
+      <div class="auth-card">
+        <h2>Create account</h2>
+        <p class="subtitle">Enter your details to get started.</p>
+        <form id="registerForm">
+          <div class="form-grid">
+            <div class="field"><label for="name">Name</label><input type="text" id="name" placeholder="Your name" required></div>
+            <div class="field"><label for="email">Email</label><input type="email" id="email" placeholder="you@example.com" required></div>
+            <div class="field"><label for="password">Password</label><input type="password" id="password" placeholder="Create a password" required></div>
+            <div class="field"><label for="role">Role</label><select id="role" required><option value="">Select role</option><option value="donor">Donor</option><option value="recipient">Recipient</option><option value="hospital">Hospital</option></select></div>
+            <div class="field"><label for="phone">Phone</label><input type="tel" id="phone" placeholder="Phone number" required></div>
+            <div class="field"><label for="city">City</label><input type="text" id="city" placeholder="Your city" required></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-primary" type="submit">Create account</button></div>
+        </form>
+        <p id="message" class="message"></p>
+        <div class="auth-footer">Already have an account? <a href="DonarLogin.html">Donor login</a></div>
+      </div>
+    </section>
+  </div>
 
-    <h2>Create Account</h2>
-
-    <form id="registerForm">
-
-        <label for="name">Name:</label>
-        <input
-            type="text"
-            id="name"
-            placeholder="Enter your name"
-            required
-        >
-        <br><br>
-
-        <label for="email">Email:</label>
-        <input
-            type="email"
-            id="email"
-            placeholder="Enter your email"
-            required
-        >
-        <br><br>
-
-        <label for="password">Password:</label>
-        <input
-            type="password"
-            id="password"
-            placeholder="Enter your password"
-            required
-        >
-        <br><br>
-
-        <label for="role">Role:</label>
-        <select id="role" required>
-            <option value="">-- Select Role --</option>
-            <option value="donor">Donor</option>
-            <option value="recipient">Recipient</option>
-            <option value="hospital">Hospital</option>
-        </select>
-        <br><br>
-
-        <label for="phone">Phone:</label>
-        <input
-            type="tel"
-            id="phone"
-            placeholder="Enter your phone number"
-            required
-        >
-        <br><br>
-
-        <label for="city">City:</label>
-        <input
-            type="text"
-            id="city"
-            placeholder="Enter your city"
-            required
-        >
-        <br><br>
-
-        <button type="submit">Register</button>
-
-    </form>
-
-    <p id="message"></p>
-
-    <p>
-        Already have an account?
-        <a href="DonarLogin.html">Login here</a>
-    </p>
-
-    <script>
-        const registerForm = document.getElementById("registerForm");
-        const message = document.getElementById("message");
-
-        registerForm.addEventListener("submit", async function (event) {
-
-            event.preventDefault();
-
-            const name = document.getElementById("name").value;
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            const role = document.getElementById("role").value;
-            const phone = document.getElementById("phone").value;
-            const city = document.getElementById("city").value;
-
-            try {
-
-                const response = await fetch(
-                    "http://localhost:5001/api/auth/register",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            name: name,
-                            email: email,
-                            password: password,
-                            role: role,
-                            phone: phone,
-                            city: city
-                        })
-                    }
-                );
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-
-                    message.textContent = "Registration successful!";
-
-                    registerForm.reset();
-
-                } else {
-
-                    message.textContent =
-                        data.message || "Registration failed";
-                }
-
-            } catch (error) {
-
-                console.error("Registration error:", error);
-
-                message.textContent =
-                    "Unable to connect to the server.";
-            }
+  <script>
+    const form = document.getElementById("registerForm");
+    const message = document.getElementById("message");
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.className = "message";
+      message.textContent = "Creating account...";
+      try {
+        const response = await fetch("http://localhost:5001/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: document.getElementById("name").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value,
+            role: document.getElementById("role").value,
+            phone: document.getElementById("phone").value.trim(),
+            city: document.getElementById("city").value.trim()
+          })
         });
-    </script>
-
+        const data = await response.json();
+        if (response.ok && data.success) {
+          message.className = "message success";
+          message.textContent = "Registration successful. You can now log in.";
+          form.reset();
+        } else {
+          message.className = "message error";
+          message.textContent = data.message || "Registration failed";
+        }
+      } catch (error) {
+        console.error(error);
+        message.className = "message error";
+        message.textContent = "Unable to connect to the server.";
+      }
+    });
+  </script>
 </body>
 </html>
