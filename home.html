@@ -1,24 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Donation Network</title>
-    <link rel="stylesheet" href="home.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blood Donation Network</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="buttons">
-        <h1>Blood Donation Network</h1>
-
-        <a href="DonarLogin.html">
-            <button id="donor">Donor Login</button>
-        </a>
-        <br><br>
-
-        <button id="org">Organization Login</button>
-        <br><br>
-
-        <a href="donorDashboard.html">View Donor List</a>
+  <nav class="navbar">
+    <a class="brand" href="home.html"><span class="brand-mark">♥</span> Blood Donation Network</a>
+    <div class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="donorDashboard.html">Find donors</a>
+      <a href="Register.html">Create account</a>
     </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Every donation can save a life</div>
+        <h1>Connect people who need blood with <span>people ready to help.</span></h1>
+        <p>A simple blood donation network for donors, recipients and hospitals. Register, find compatible donors, and keep your availability up to date.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="Register.html">Get started</a>
+          <a class="btn btn-secondary" href="DonarLogin.html">Donor login</a>
+          <a class="btn btn-secondary" href="OrgLogin.html">Hospital login</a>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="eyebrow">Quick access</div>
+        <h2>Find a donor</h2>
+        <p>Browse the public donor directory and filter by blood group and city.</p>
+        <a class="btn btn-primary" href="donorDashboard.html">Open donor directory</a>
+        <div class="stat-grid">
+          <div class="stat"><strong>8</strong><span>Blood groups supported</span></div>
+          <div class="stat"><strong>24/7</strong><span>Profile availability</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how-it-works">
+      <div class="section-title">
+        <div class="eyebrow">How it works</div>
+        <h2>A focused flow from registration to donor discovery.</h2>
+        <p>The current frontend is connected to the existing authentication and donor APIs in the backend.</p>
+      </div>
+      <div class="cards">
+        <article class="feature"><div class="feature-icon">1</div><h3>Create an account</h3><p>Register with your name, contact details, city and role.</p></article>
+        <article class="feature"><div class="feature-icon">2</div><h3>Build a donor profile</h3><p>Donors can add blood group, age, location and availability after login.</p></article>
+        <article class="feature"><div class="feature-icon">3</div><h3>Discover donors</h3><p>Anyone can browse the public donor directory and narrow results by blood group or city.</p></article>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
