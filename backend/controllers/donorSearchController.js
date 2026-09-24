@@ -1,61 +1,44 @@
+const Donor = require("../models/Donor");
 
-// Dummy donor data for testing
-const donors = [
-    {
-        name: "Ravi",
-        bloodGroup: "O+",
-        city: "Bhimavaram",
-        phone: "9876543210",
-        available: true
-    },
-    {
-        name: "Priya",
-        bloodGroup: "A+",
-        city: "Vijayawada",
-        phone: "9876543211",
-        available: true
-    },
-    {
-        name: "Kiran",
-        bloodGroup: "O+",
-        city: "Bhimavaram",
-        phone: "9876543212",
-        available: false
-    },
-    {
-        name: "Anjali",
-        bloodGroup: "B+",
-        city: "Hyderabad",
-        phone: "9876543213",
-        available: true
-    }
-];
+const escapeRegex = (value) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Search donors
-const searchDonors = (req, res) => {
-
+// Search available donors stored in MongoDB.
+const searchDonors = async (req, res) => {
+  try {
     const { bloodGroup, city } = req.query;
 
-    const matchingDonors = donors.filter((donor) => {
+    const filter = {
+      available: true
+    };
 
-        const bloodMatch =
-            !bloodGroup ||
-            donor.bloodGroup.toLowerCase() === bloodGroup.toLowerCase();
+    if (bloodGroup) {
+      filter.bloodGroup = bloodGroup.trim().toUpperCase();
+    }
 
-        const cityMatch =
-            !city ||
-            donor.city.toLowerCase() === city.toLowerCase();
+    if (city && city.trim()) {
+      filter.city = new RegExp(`^${escapeRegex(city.trim())}$`, "i");
+    }
 
-        return bloodMatch && cityMatch && donor.available === true;
-    });
+    const matchingDonors = await Donor.find(filter).select(
+      "name bloodGroup city phone available"
+    );
 
     res.json({
-        success: true,
-        count: matchingDonors.length,
-        donors: matchingDonors
+      success: true,
+      count: matchingDonors.length,
+      donors: matchingDonors
     });
+  } catch (error) {
+    console.error("Donor search error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to search donors"
+    });
+  }
 };
 
 module.exports = {
-    searchDonors
+  searchDonors
 };
