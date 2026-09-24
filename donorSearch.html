@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Donors | Blood Donation Network</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-shell">
+  <nav class="navbar">
+    <a class="brand" href="home.html"><span class="brand-mark">♥</span> Blood Donation Network</a>
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="donorSearch.html">Donor Search</a>
+      <a href="Register.html">Create account</a>
+    </div>
+  </nav>
+
+  <main class="dashboard">
+    <section class="search-hero">
+      <div class="eyebrow">Donor discovery</div>
+      <h1>Find an available blood donor</h1>
+      <p>Search the donor network by blood group, city, or both. Only donors marked as available are shown.</p>
+    </section>
+
+    <section class="panel search-panel">
+      <div class="dashboard-header">
+        <div>
+          <h2>Search donors</h2>
+          <p>Choose a blood group and/or enter a city to narrow the results.</p>
+        </div>
+        <button id="clearSearch" class="btn btn-secondary" type="button">Clear</button>
+      </div>
+
+      <form id="searchForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="bloodGroup">Blood group</label>
+            <select id="bloodGroup">
+              <option value="">All blood groups</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="city">City</label>
+            <input id="city" type="text" placeholder="Enter city">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Search donors</button>
+        </div>
+      </form>
+      <p id="searchMessage" class="message"></p>
+    </section>
+
+    <section class="panel">
+      <div class="dashboard-header">
+        <div>
+          <h2>Available donors</h2>
+          <p id="resultSummary">Search to view matching donors.</p>
+        </div>
+      </div>
+      <div id="donorResults" class="donor-grid">
+        <div class="empty">Enter your search criteria and click Search donors.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = "http://localhost:5001/api/donors/search";
+    const form = document.getElementById("searchForm");
+    const bloodGroup = document.getElementById("bloodGroup");
+    const city = document.getElementById("city");
+    const results = document.getElementById("donorResults");
+    const message = document.getElementById("searchMessage");
+    const summary = document.getElementById("resultSummary");
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderDonors(donors) {
+      if (!donors.length) {
+        results.innerHTML = "<div class='empty'>No available donors match your search.</div>";
+        return;
+      }
+
+      results.innerHTML = donors.map(donor => `
+        <article class="donor-card">
+          <div class="donor-card-header">
+            <div>
+              <h3>${escapeHtml(donor.name)}</h3>
+              <span class="blood-badge">${escapeHtml(donor.bloodGroup)}</span>
+            </div>
+            <span class="badge">Available</span>
+          </div>
+          <p><strong>City:</strong> ${escapeHtml(donor.city)}</p>
+          <p><strong>Phone:</strong> ${escapeHtml(donor.phone)}</p>
+        </article>
+      `).join("");
+    }
+
+    async function searchDonors() {
+      const params = new URLSearchParams();
+      if (bloodGroup.value) params.set("bloodGroup", bloodGroup.value);
+      if (city.value.trim()) params.set("city", city.value.trim());
+
+      results.innerHTML = "<div class='empty'>Searching donors...</div>";
+      message.className = "message";
+      message.textContent = "";
+      summary.textContent = "Searching...";
+
+      try {
+        const response = await fetch(`${API}?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "Unable to search donors");
+        }
+
+        renderDonors(data.donors);
+        summary.textContent = `${data.count} available donor${data.count === 1 ? "" : "s"} found`;
+      } catch (error) {
+        console.error(error);
+        results.innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`;
+        summary.textContent = "Search failed";
+        message.className = "message error";
+        message.textContent = "Unable to connect to the donor search service.";
+      }
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      searchDonors();
+    });
+
+    document.getElementById("clearSearch").addEventListener("click", () => {
+      form.reset();
+      results.innerHTML = "<div class='empty'>Enter your search criteria and click Search donors.</div>";
+      summary.textContent = "Search to view matching donors.";
+      message.textContent = "";
+      message.className = "message";
+    });
+  </script>
+</body>
+</html>
