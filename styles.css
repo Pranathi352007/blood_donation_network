@@ -104,9 +104,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--red); box-shadow
 .donor-card { padding: 20px; border: 1px solid var(--line); border-radius: 17px; background: #fff; }
 .donor-card h3 { margin: 0 0 10px; }
 .donor-card p { margin: 7px 0; color: var(--muted); }
+.donor-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.blood-badge { display: inline-flex; padding: 5px 9px; border-radius: 999px; background: var(--rose); color: var(--red); font-weight: 800; font-size: .78rem; }
 .badge { display: inline-flex; padding: 5px 9px; border-radius: 999px; background: #eaf8ef; color: var(--green); font-weight: 700; font-size: .78rem; }
 .badge.off { background: #f1f3f5; color: #667085; }
 .empty { color: var(--muted); padding: 25px 0; text-align: center; }
+.search-hero { padding: 25px 0 20px; }
+.search-hero h1 { margin: 8px 0 10px; font-size: clamp(2rem, 4vw, 3.2rem); }
+.search-hero p { color: var(--muted); line-height: 1.7; max-width: 720px; }
+.search-panel { margin-top: 10px; }
 
 @media (max-width: 900px) {
   .hero, .auth-page { grid-template-columns: 1fr; }
@@ -122,4 +128,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--red); box-shadow
   .auth-card { padding: 25px; }
   .dashboard-header { align-items: flex-start; flex-direction: column; }
   .stat-grid { grid-template-columns: 1fr; }
+  .donor-card-header { flex-direction: column; }
 }
