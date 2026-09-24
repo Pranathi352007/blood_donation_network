@@ -1,49 +1,76 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>Hospital Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Dashboard | Blood Donation Network</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
+<body class="page-shell">
+  <nav class="navbar">
+    <a class="brand" href="home.html"><span class="brand-mark">♥</span> Blood Donation Network</a>
+    <button id="logout" class="btn btn-danger">Logout</button>
+  </nav>
 
-<body>
+  <main class="dashboard">
+    <div class="dashboard-header">
+      <div><h1>Hospital Dashboard</h1><p id="welcome">Loading account...</p></div>
+    </div>
 
-    <h1>Hospital Dashboard</h1>
+    <section class="panel">
+      <div class="eyebrow">Blood request</div>
+      <h2>Create a blood requirement</h2>
+      <p class="subtitle">This frontend form is ready for the hospital request API. The current backend repository does not yet expose a blood-request endpoint, so submission is intentionally kept local until that API is added.</p>
+      <form id="requestForm">
+        <div class="form-grid">
+          <div class="field"><label for="hospitalName">Hospital name</label><input id="hospitalName" required></div>
+          <div class="field"><label for="bloodGroup">Blood group</label><select id="bloodGroup" required><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+          <div class="field"><label for="units">Units required</label><input id="units" type="number" min="1" required></div>
+          <div class="field"><label for="city">City</label><input id="city" required></div>
+          <div class="field full"><label for="urgency">Urgency</label><select id="urgency"><option>Normal</option><option>Urgent</option><option>Critical</option></select></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Save request locally</button></div>
+      </form>
+      <p id="message" class="message"></p>
+    </section>
 
-    <h2>Blood Request</h2>
+    <section class="panel">
+      <div class="dashboard-header"><div><h2>Request status</h2><p>Saved in this browser for now. Backend persistence will be connected when request routes are implemented.</p></div></div>
+      <div id="requestList" class="donor-grid"></div>
+    </section>
+  </main>
 
-    <form>
-        <label>Hospital Name:</label>
-        <input type="text" placeholder="Enter hospital name">
-        <br><br>
+  <script>
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    if (!token || !user || user.role !== "hospital") window.location.href = "OrgLogin.html";
+    else document.getElementById("welcome").textContent = `Welcome, ${user.name}. Hospital tools are ready.`;
 
-        <label>Blood Group:</label>
-        <select>
-            <option>-- Select Blood Group --</option>
-            <option>A+</option>
-            <option>A-</option>
-            <option>B+</option>
-            <option>B-</option>
-            <option>O+</option>
-            <option>O-</option>
-            <option>AB+</option>
-            <option>AB-</option>
-        </select>
-        <br><br>
+    const storageKey = "bloodDonationHospitalRequests";
+    const form = document.getElementById("requestForm");
+    const message = document.getElementById("message");
+    const list = document.getElementById("requestList");
 
-        <label>Units Required:</label>
-        <input type="number" min="1">
-        <br><br>
+    function renderRequests() {
+      const requests = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      if (!requests.length) { list.innerHTML = '<div class="empty">No blood requests have been saved in this browser.</div>'; return; }
+      list.innerHTML = requests.map(r => `<article class="donor-card"><h3>${escapeHtml(r.hospitalName)}</h3><p><strong>Blood:</strong> ${escapeHtml(r.bloodGroup)}</p><p><strong>Units:</strong> ${r.units}</p><p><strong>City:</strong> ${escapeHtml(r.city)}</p><p><strong>Urgency:</strong> ${escapeHtml(r.urgency)}</p></article>`).join("");
+    }
 
-        <label>City:</label>
-        <input type="text" placeholder="Enter city">
-        <br><br>
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const requests = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      requests.unshift({ hospitalName: document.getElementById("hospitalName").value.trim(), bloodGroup: document.getElementById("bloodGroup").value, units: Number(document.getElementById("units").value), city: document.getElementById("city").value.trim(), urgency: document.getElementById("urgency").value });
+      localStorage.setItem(storageKey, JSON.stringify(requests));
+      form.reset();
+      message.className = "message success";
+      message.textContent = "Request saved in this browser. Backend request persistence is not available yet.";
+      renderRequests();
+    });
 
-        <button type="submit">Submit Blood Request</button>
-    </form>
-
-    <h2>Hospital Information</h2>
-    <p>Use this page to manage blood requirements and requests.</p>
-
+    function escapeHtml(v) { return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+    document.getElementById("logout").addEventListener("click", () => { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "OrgLogin.html"; });
+    renderRequests();
+  </script>
 </body>
-
 </html>
