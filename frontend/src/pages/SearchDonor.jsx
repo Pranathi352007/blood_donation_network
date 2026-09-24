@@ -1,31 +1,45 @@
-
 import { useState } from "react";
+
+const API_BASE_URL = "http://localhost:5001";
 
 function SearchDonor() {
   const [bloodGroup, setBloodGroup] = useState("");
   const [city, setCity] = useState("");
   const [donors, setDonors] = useState([]);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const searchDonors = async () => {
+    setLoading(true);
+    setMessage("");
+
     try {
+      const params = new URLSearchParams();
+
+      if (bloodGroup) params.set("bloodGroup", bloodGroup);
+      if (city.trim()) params.set("city", city.trim());
+
       const response = await fetch(
-        `http://localhost:5000/api/donors/search?bloodGroup=${encodeURIComponent(
-          bloodGroup
-        )}&city=${encodeURIComponent(city)}`
+        `${API_BASE_URL}/api/donors/search?${params.toString()}`
       );
 
       const data = await response.json();
 
-      setDonors(data.donors);
-
-      if (data.donors.length === 0) {
-        setMessage("No matching donors found.");
-      } else {
-        setMessage(`${data.donors.length} donor(s) found.`);
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Search failed");
       }
+
+      setDonors(data.donors || []);
+      setMessage(
+        data.donors?.length
+          ? `${data.donors.length} donor(s) found.`
+          : "No matching donors found."
+      );
     } catch (error) {
+      setDonors([]);
       setMessage("Unable to connect to the server.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,13 +48,13 @@ function SearchDonor() {
       <h1>Blood Donor Search</h1>
 
       <div>
-        <label>Blood Group: </label>
-
+        <label htmlFor="bloodGroup">Blood Group: </label>
         <select
+          id="bloodGroup"
           value={bloodGroup}
           onChange={(e) => setBloodGroup(e.target.value)}
         >
-          <option value="">Select Blood Group</option>
+          <option value="">All Blood Groups</option>
           <option value="A+">A+</option>
           <option value="A-">A-</option>
           <option value="B+">B+</option>
@@ -55,9 +69,9 @@ function SearchDonor() {
       <br />
 
       <div>
-        <label>City: </label>
-
+        <label htmlFor="city">City: </label>
         <input
+          id="city"
           type="text"
           placeholder="Enter city"
           value={city}
@@ -67,13 +81,15 @@ function SearchDonor() {
 
       <br />
 
-      <button onClick={searchDonors}>Search Donors</button>
+      <button onClick={searchDonors} disabled={loading}>
+        {loading ? "Searching..." : "Search Donors"}
+      </button>
 
       <h3>{message}</h3>
 
-      {donors.map((donor, index) => (
+      {donors.map((donor) => (
         <div
-          key={index}
+          key={donor._id || `${donor.name}-${donor.phone}`}
           style={{
             border: "1px solid #ccc",
             padding: "15px",
@@ -85,7 +101,7 @@ function SearchDonor() {
           <p>Blood Group: {donor.bloodGroup}</p>
           <p>City: {donor.city}</p>
           <p>Phone: {donor.phone}</p>
-          <p>Available: Yes</p>
+          <p>Available: {donor.available ? "Yes" : "No"}</p>
         </div>
       ))}
     </div>
