@@ -4,6 +4,8 @@ require("dotenv").config();
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
+const donorRoutes = require("./routes/donorRoutes");
+const requestRoutes = require("./routes/requestRoutes");
 
 const app = express();
 
@@ -14,16 +16,18 @@ connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/donors", donorRoutes);
+app.use("/api/requests", requestRoutes);
 
 const PORT = process.env.PORT || 5001;
 
 app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "Blood Donation Network API is running"
-  });
+    res.json({
+        success: true,
+        message: "Blood Donation Network API is running"
+    });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
