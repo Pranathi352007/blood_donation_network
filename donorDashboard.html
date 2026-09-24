@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard</title>
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+    <div class="buttons">
+        <h1>Donor Dashboard</h1>
+        <p id="welcome"></p>
+
+        <h2>Create Donor Profile</h2>
+        <form id="donorForm">
+            <label for="name">Name:</label><br>
+            <input type="text" id="name" required><br><br>
+
+            <label for="bloodGroup">Blood Group:</label><br>
+            <select id="bloodGroup" required>
+                <option value="">Select</option>
+                <option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option>
+                <option>O+</option><option>O-</option>
+            </select><br><br>
+
+            <label for="phone">Phone:</label><br>
+            <input type="tel" id="phone" required><br><br>
+
+            <label for="city">City:</label><br>
+            <input type="text" id="city" required><br><br>
+
+            <label for="age">Age:</label><br>
+            <input type="number" id="age" min="18" max="65" required><br><br>
+
+            <label for="gender">Gender:</label><br>
+            <select id="gender">
+                <option value="">Select</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+            </select><br><br>
+
+            <label for="address">Address:</label><br>
+            <input type="text" id="address"><br><br>
+
+            <label>
+                <input type="checkbox" id="available" checked>
+                Available for donation
+            </label><br><br>
+
+            <button type="submit">Create Donor Profile</button>
+        </form>
+
+        <p id="message"></p>
+
+        <hr>
+
+        <h2>Donor List</h2>
+        <button id="loadDonors">View Donors</button>
+        <div id="donorList"></div>
+
+        <br>
+        <button id="logout">Logout</button>
+    </div>
+
+    <script>
+        const API = "http://localhost:5001/api/donors";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user") || "null");
+        const message = document.getElementById("message");
+
+        if (!token || !user) {
+            window.location.href = "DonarLogin.html";
+        } else {
+            document.getElementById("welcome").textContent =
+                "Welcome, " + user.name + "!";
+        }
+
+        function authHeaders() {
+            return {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            };
+        }
+
+        document.getElementById("donorForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            message.textContent = "Creating donor profile...";
+
+            try {
+                const response = await fetch(API, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        name: document.getElementById("name").value.trim(),
+                        bloodGroup: document.getElementById("bloodGroup").value,
+                        phone: document.getElementById("phone").value.trim(),
+                        city: document.getElementById("city").value.trim(),
+                        age: Number(document.getElementById("age").value),
+                        gender: document.getElementById("gender").value || undefined,
+                        address: document.getElementById("address").value.trim(),
+                        available: document.getElementById("available").checked
+                    })
+                });
+
+                const data = await response.json();
+                message.textContent = data.message || "Request completed";
+
+                if (response.ok && data.success) {
+                    document.getElementById("donorForm").reset();
+                    document.getElementById("available").checked = true;
+                    loadDonors();
+                }
+            } catch (error) {
+                console.error(error);
+                message.textContent = "Unable to connect to the server.";
+            }
+        });
+
+        async function loadDonors() {
+            const list = document.getElementById("donorList");
+            list.textContent = "Loading donors...";
+
+            try {
+                const response = await fetch(API);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    list.textContent = data.message || "Unable to load donors.";
+                    return;
+                }
+
+                if (data.donors.length === 0) {
+                    list.textContent = "No donors found.";
+                    return;
+                }
+
+                list.innerHTML = data.donors.map(donor => `
+                    <div>
+                        <strong>${escapeHtml(donor.name)}</strong><br>
+                        Blood Group: ${escapeHtml(donor.bloodGroup)}<br>
+                        City: ${escapeHtml(donor.city)}<br>
+                        Phone: ${escapeHtml(donor.phone)}<br>
+                        Age: ${donor.age}<br>
+                        Available: ${donor.available ? "Yes" : "No"}
+                        <hr>
+                    </div>
+                `).join("");
+            } catch (error) {
+                console.error(error);
+                list.textContent = "Unable to connect to the server.";
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        document.getElementById("loadDonors").addEventListener("click", loadDonors);
+
+        document.getElementById("logout").addEventListener("click", function () {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "DonarLogin.html";
+        });
+    </script>
+</body>
+</html>
