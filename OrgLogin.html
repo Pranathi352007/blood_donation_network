@@ -1,31 +1,63 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Login | Blood Donation Network</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
 <body>
-    <form>
-        Organisation Name:<input type="text" placeholder="eg:name" required><br>
-        Phone Number:<input type="number" placeholder="eg:1234567893" required><br>
-        Address:<textarea></textarea><br>
-        Organisation Type:
-        <select>
-            <option>----select option----</option>
-            <option>Hospital</option>
-            <option>Blood Bank</option>
-        </select>
+  <div class="auth-page">
+    <section class="auth-visual">
+      <a class="brand" href="home.html"><span class="brand-mark">♥</span> Blood Donation Network</a>
+      <div>
+        <div class="eyebrow">Hospital access</div>
+        <h1>Help coordinate blood needs faster.</h1>
+        <p>Authorized hospital accounts can sign in here. The login uses the same backend authentication service as donor accounts.</p>
+      </div>
+    </section>
+    <section class="auth-form-wrap">
+      <div class="auth-card">
+        <h2>Hospital Login</h2>
+        <p class="subtitle">Use the email and password from your hospital account.</p>
+        <form id="loginForm">
+          <div class="field"><label for="email">Email</label><input type="email" id="email" placeholder="hospital@example.com" required></div>
+          <div class="field" style="margin-top:16px"><label for="password">Password</label><input type="password" id="password" placeholder="Your password" required></div>
+          <div class="form-actions"><button class="btn btn-primary" type="submit">Sign in</button></div>
+        </form>
+        <p id="message" class="message"></p>
+        <div class="auth-footer">Need an account? <a href="Register.html">Register here</a></div>
+      </div>
+    </section>
+  </div>
 
-        Available Blood Group:
-        <select>
-            <option>----Select Group----</option>
-            <option>A+</option>
-            <option>A-</option>
-            <option>B+</option>
-            <option>B-</option>
-            <option>O+</option>
-            <option>O-</option>
-            <option>AB+</option>
-            <option>AB-</option>
-        </select>
-    </form>
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const message = document.getElementById("message");
+      message.className = "message";
+      message.textContent = "Signing in...";
+      try {
+        const response = await fetch("http://localhost:5001/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: document.getElementById("email").value.trim(), password: document.getElementById("password").value })
+        });
+        const data = await response.json();
+        if (response.ok && data.success && data.user.role === "hospital") {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          window.location.href = "hospital.html";
+        } else {
+          message.className = "message error";
+          message.textContent = response.ok && data.success ? "This page is for hospital accounts." : (data.message || "Login failed");
+        }
+      } catch (error) {
+        console.error(error);
+        message.className = "message error";
+        message.textContent = "Unable to connect to the server.";
+      }
+    });
+  </script>
 </body>
-
 </html>
