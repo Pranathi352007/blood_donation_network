@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const donorRoutes = require("./routes/donorRoutes");
 const donorSearchRoutes = require("./routes/donorSearch");
+const hospitalSearchRoutes = require("./routes/hospitalSearchRoutes");
 
 const app = express();
 
@@ -16,9 +17,10 @@ connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
-// Register the specific search route before the generic /:id donor route.
+// Register specific search routes before generic /:id donor routes.
 app.use("/api/donors", donorSearchRoutes);
 app.use("/api/donors", donorRoutes);
+app.use("/api/hospitals", hospitalSearchRoutes);
 
 const PORT = process.env.PORT || 5001;
 
